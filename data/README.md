@@ -4,7 +4,7 @@ This directory contains all datasets used by the forecasting engine.
 
 ## Structure
 - Synthetic_examples
-  Contains small synthetic CSVs
+  contains small synthetic CSVs
 
 ## Purpose
 This folder stores:
