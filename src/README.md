@@ -3,6 +3,8 @@
 This directory contains the full implementation of the Weekly Game Sales Forecasting Engine.  
 The codebase is organised into clean, self-contained modules so we can quickly understand the architecture.
 
+Instructions on how to run code can be found in docs.
+
 ---
 
 ## 📁 Folder Structure Overview
