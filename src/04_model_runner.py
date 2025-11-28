@@ -7,7 +7,6 @@
 #       • Prior decay curve (real sales space)
 #       • Log-residual XGBoost
 #       • XSTL cross-sectional similarity layer
-#       • (Bayesian optimisation removed for stability)
 #
 #
 # USED FOR:
@@ -80,7 +79,15 @@ HAS_SKOPT = False
 # ============================================================
 # CONFIG
 # ============================================================
-
+"""
+Configuration block for paths, constants, and default XGBoost parameters.
+Covers:
+    • Dataset locations
+    • Selected feature import path
+    • Deterministic hyperparameters
+    • Reliability scaling constants
+    • Regime feature candidates
+"""
 TRAIN_PATH = "synthetic_data/synthetic_game_sales_timeseries.csv"
 
 NEW_GAME_FILES = [
@@ -129,19 +136,30 @@ REGIME_FEATURE_CANDIDATES = [
 
 def _describe_utilities():
     """
-    Documentation block for utility functions in this script.
+    Internal helper (unused at runtime).
+    Documents utility helpers including:
+        • Feature list loading
+        • Time feature generation
+        • Safe inclusion of required engineered features
+    This block exists purely for documentation completeness.
     """
     return None
 
 
 def load_selected_features(path: str):
-    """Load the pruned feature list from disk."""
+    """Load pruned feature list from file and return as Python list."""
     with open(path, "r", encoding="utf-8") as f:
         return [x.strip() for x in f if x.strip()]
 
 
 def add_time_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Add normalised and log time features from week_index."""
+    """
+    Add deterministic time-structure helpers:
+        • week_index_norm
+        • week_index_sq
+        • log_week_index
+    Improves both prior shape and XGB’s residual modelling.
+    """
     df = df.copy()
     if "week_index" in df.columns:
         w = df["week_index"].astype(float)
@@ -153,7 +171,10 @@ def add_time_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def ensure_time_features_in_feature_list(features, columns):
-    """Ensure time-based helper features are not dropped by the pruner."""
+    """
+    Ensures mandatory time-based helpers remain in feature list even
+    after pruning. Prevents the feature pruner from dropping them.
+    """
     for col in ["week_index_norm", "week_index_sq", "log_week_index"]:
         if col in columns and col not in features:
             features.append(col)
@@ -161,7 +182,10 @@ def ensure_time_features_in_feature_list(features, columns):
 
 
 def build_sales_target(df: pd.DataFrame) -> pd.DataFrame:
-    """Create log1p(sales) target column."""
+    """
+    Construct log1p(sales) as the model target.
+    Keeps training numerically stable and improves residual modelling.
+    """
     df = df.copy()
     df[TARGET] = np.log1p(df["sales"].astype(float))
     return df
@@ -172,6 +196,15 @@ def build_sales_target(df: pd.DataFrame) -> pd.DataFrame:
 # ============================================================
 
 def build_decay_prior(df: pd.DataFrame) -> np.ndarray:
+    """
+    Compute real-space exponential decay prior using:
+        • peak_sales_param
+        • decay_rate_k
+    Includes:
+        • Indie flattening (longer tail)
+        • Discount spikes + echoes
+        • DLC spikes + multi-week echoes
+    """
     df_local = df.copy()
 
     peak = df_local["peak_sales_param"].values.astype(float)
@@ -233,6 +266,14 @@ def build_decay_prior(df: pd.DataFrame) -> np.ndarray:
 # ============================================================
 
 def build_residual_target(df: pd.DataFrame, prior: np.ndarray) -> np.ndarray:
+    """
+    Construct the residual target:
+        y_resid = log1p(sales) - log1p(prior)
+    Includes:
+        • Promo-aware upper bounds (discounts, DLC, echoes)
+        • Lower bound for realistic decay
+        • Title-by-title sequential echo logic
+    """
     y_log = df[TARGET].values.astype(float)
     n = len(df)
 
@@ -284,6 +325,13 @@ def build_residual_target(df: pd.DataFrame, prior: np.ndarray) -> np.ndarray:
 # ============================================================
 
 def mahalanobis_distance_matrix(X_train, X_new, eps: float = 1e-6) -> np.ndarray:
+    """
+    Compute Mahalanobis-style distance using diagonal covariance.
+    Used in:
+        • Drift score
+        • Regime similarity
+        • XSTL similarity kernel
+    """
     X_train = np.asarray(X_train, float)
     X_new = np.asarray(X_new, float)
 
@@ -296,6 +344,13 @@ def mahalanobis_distance_matrix(X_train, X_new, eps: float = 1e-6) -> np.ndarray
 
 
 def add_xstl_features(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Generate cross-sectional template learning (XSTL) features:
+        • Global mean/median/std by week_index
+        • Dev-type mean/std by week_index
+        • Franchise mean/std by week_index
+    Provides structural anchors for new-title similarity.
+    """
     df = df.copy()
 
     g = df.groupby("week_index")["sales"]
@@ -316,6 +371,10 @@ def add_xstl_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def compute_xstl_similarity(X_train: np.ndarray, X_new: np.ndarray) -> np.ndarray:
+    """
+    Convert Mahalanobis distance into similarity score using
+    exp(-dist / XSTL_SCALE). Higher = more similar to training universe.
+    """
     dist = mahalanobis_distance_matrix(X_train, X_new)
     return np.exp(-dist / XSTL_SCALE)
 
@@ -325,6 +384,12 @@ def compute_xstl_similarity(X_train: np.ndarray, X_new: np.ndarray) -> np.ndarra
 # ============================================================
 
 def smape_real(y_true, y_pred) -> float:
+    """
+    Compute SMAPE directly in real sales space.
+    Used for:
+        • CV evaluation
+        • Model quality reporting
+    """
     y_true = np.asarray(y_true, float)
     y_pred = np.asarray(y_pred, float)
     return 100 * np.mean(
@@ -337,7 +402,15 @@ def smape_real(y_true, y_pred) -> float:
 # ============================================================
 
 def main():
-
+    """
+    Main pipeline for:
+        • Training residual XGBoost model
+        • Building prior decay curves
+        • Generating predictions for new titles
+        • Computing reliability scores
+        • Producing blended forecasts, P10/P90 bands
+        • Saving detailed, summary, and metadata CSV outputs
+    """
     # ---------------- LOAD TRAIN ----------------
     df = pd.read_csv(TRAIN_PATH)
     df = build_sales_target(df)
@@ -460,6 +533,12 @@ def main():
     xgb_residual_real = raw_pred - prior_new
 
     # ---------------- PROMO SAFETY ----------------
+    """
+    Promo-safety logic:
+        • Detects promo weeks & echo weeks
+        • Ensures XGB cannot produce unrealistic spikes
+        • Enforces: blended_pred >= prior_new on promo windows
+    """
     promo_mask = (
         (df_new["discount_flag"] == 1) |
         (df_new["dlc_flag"] == 1)
@@ -482,6 +561,13 @@ def main():
     # RELIABILITY BLOCK
     # ============================================================
 
+    """
+    Reliability scoring:
+        • Drift score       = Distance from training universe
+        • Regime score      = Behavioural fit to core regime
+        • XSTL similarity   = Cross-sectional template match
+    Final score = geometric mean of three components.
+    """
     drift_dist = mahalanobis_distance_matrix(X_tab, X_new)
     raw_drift = np.exp(-drift_dist / DRIFT_SCALE)
 
@@ -498,6 +584,7 @@ def main():
     raw_xstl = compute_xstl_similarity(X_tab, X_new)
 
     def scale_to_unit(x, raw_max: float = 0.6):
+        """Internal scaling helper to normalise similarity metrics."""
         return np.clip(x / raw_max, 0.0, 1.0)
 
     Regime_Conf_Scaled = scale_to_unit(raw_regime)
@@ -514,6 +601,14 @@ def main():
     # DYNAMIC RELIABILITY-WEIGHTED BLEND
     # ============================================================
 
+    """
+    Reliability-blended forecast:
+        blended = w_xgb * xgb + (1 - w_xgb) * prior
+    Includes:
+        • Minimum XGB weight of 0.30
+        • Smoothing for better stability
+        • Floor constraint vs prior decay
+    """
     rel = Model_Reliability_Score
     rel_smoothed = 0.7 * rel + 0.21
 
@@ -542,6 +637,13 @@ def main():
     # OUTPUT + BASELINE FIELDS
     # ============================================================
 
+    """
+    Output assembly:
+        • Detailed per-week per-title predictions
+        • Marketing uplift & baseline factors
+        • P10/P90 quantile bands
+        • Reliability metrics
+    """
     detailed = pd.DataFrame({
         "title_name": df_new["title_name"],
         "dev_type": df_new["dev_type"],
@@ -598,6 +700,11 @@ def main():
     # SORT + SAVE DETAILED
     # ------------------------------------------------------------
 
+    """
+    Ordering:
+        AAA → AA → Indie
+    Produces readable final CSV for dashboard inputs.
+    """
     dev_order = {"AAA": 0, "AA": 1, "Indie": 2}
     detailed["_sort"] = detailed["dev_type"].map(dev_order).fillna(99)
     detailed = detailed.sort_values(
@@ -614,6 +721,13 @@ def main():
     # SUMMARY
     # ------------------------------------------------------------
 
+    """
+    Build rollup summary containing:
+        • Total forecast
+        • Total baseline_no_marketing / uplift
+        • Average reliability
+        • Peak week + value
+    """
     summary = detailed.groupby("title_name").agg(
         total_forecast=("final_pred_blended", "sum"),
         total_p10=("blend_p10", "sum"),
@@ -648,6 +762,12 @@ def main():
     # METADATA
     # ------------------------------------------------------------
 
+    """
+    Export clean metadata table:
+        • All non-sales fields from new game input
+        • title_name / dev_type / region / franchise strength etc.
+    Designed for dashboard usage.
+    """
     meta_cols = [
         "title_name",
         "dev_type",
