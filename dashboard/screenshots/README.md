@@ -8,9 +8,9 @@ This folder contains all visual outputs and UI screenshots used to illustrate th
 
 1. Full Dashboard Overview
    
-Full Dashboard.jpg
+   Full Dashboard.jpg
 
-A complete view of the Power BI dashboard, showing the key KPIs, charts, and filters.
+   A complete view of the Power BI dashboard, showing the key KPIs, charts, and filters.
 
 3. Blending Weights & Uplift Curves
 
