@@ -1,3 +1,3 @@
-# Documentation
+## Documentation
 
-Proposal, technical notes, and model maths for the game sales forecasting engine.
+**Proposal (brief and detailed) and Run Instructions**
