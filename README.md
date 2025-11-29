@@ -75,7 +75,36 @@ game-sales-forecasting-engine/
 │   └── screenshots/
 │
 └── docs/
-    └── how_to_run.md   ← You are here
+    ├── how_to_run.md
+    ├── Brief Proposal - Game Sales Forecasting Engine.pdf   
+    ├── Detailed Proposal - Game Sales Forecasting Engine.pdf
+    ├── Power BI Dashboard - NeonRift.pdf
+    ├── Power BI Dashboard - Ashbound.pdf
+    └── Power BI Dashboard - Pulsebreak.pdf 
 ```
 
 ---   
+
+## 📊 Example Forecast Output
+
+Below is a sample from the AAA title *NeonRift*:
+
+| Week | Prior | Blended | P10 | P90 | Reliability |
+|------|--------|----------|----------|----------|--------------|
+| 0 | 1,450,000 | 1,484,642 | 1,261,946 | 1,707,339 | 0.0677 |
+| 1 | 1,328,617 | 1,362,893 | 1,158,459 | 1,567,327 | 0.0732 |
+
+---   
+
+## 🛠 Technologies Used
+
+- Python 3.10  
+- NumPy, Pandas, SciKit-Learn, XGBoost  
+- Power BI  
+- Git + deterministic seed-ledger
+
+---   
+
+## 👤 Author
+George Pearson  
+[LinkedIn]([your-link](https://www.linkedin.com/in/george-pearson-938914287/)) 
