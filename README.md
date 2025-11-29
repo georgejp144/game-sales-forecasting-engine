@@ -1,6 +1,6 @@
-🎮 Game Sales Forecasting Engine
+# 🎮 Game Sales Forecasting Engine
 
-A fully reproducible, end-to-end forecasting pipeline for weekly video-game sales prediction.
+**A fully reproducible, end-to-end forecasting pipeline for weekly video-game sales prediction.**
 
 This repository contains the complete implementation, including:
 
