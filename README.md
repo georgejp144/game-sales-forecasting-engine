@@ -101,10 +101,9 @@ Below is a sample from the AAA title *NeonRift*:
 - Python 3.10  
 - NumPy, Pandas, SciKit-Learn, XGBoost  
 - Power BI  
-- Git + deterministic seed-ledger
 
 ---   
 
 ## 👤 Author
 George Pearson  
-[LinkedIn]([your-link](https://www.linkedin.com/in/george-pearson-938914287/)) 
+[LinkedIn]([(https://www.linkedin.com/in/george-pearson-938914287/)]) 
