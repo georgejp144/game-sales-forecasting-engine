@@ -106,4 +106,4 @@ Below is a sample from the AAA title *NeonRift*:
 
 ## 👤 Author
 George Pearson  
-[LinkedIn]([(https://www.linkedin.com/in/george-pearson-938914287/)]) 
+
