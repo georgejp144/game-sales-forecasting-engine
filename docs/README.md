@@ -1,5 +1,7 @@
 ## Documentation
-**Including:**
----
+
+#Including:
+
 **Project Proposals**
+
 **Run Instructions**
