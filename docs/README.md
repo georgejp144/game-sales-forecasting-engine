@@ -1,6 +1,6 @@
 ## Documentation
 
-#Including:
+Including:
 
 **Project Proposals**
 
