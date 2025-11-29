@@ -3,84 +3,66 @@
 **A fully reproducible, end-to-end forecasting pipeline for weekly video-game sales prediction.**
 
 This repository contains the complete implementation, including:
+1. Synthetic dataset generator  
+2. Feature validation and pruning pipeline
+3. Multi-layer forecasting engine (Prior Curve → Log-Residual XGB → XSTL → Reliability Blending)
+4. Power BI analytics dashboard 
+5. Full execution instructions for replicability 
+
+Designed for AAA, AA, Indie and New IP titles, the engine provides:
 
 
-Synthetic data generator
+1. 52-week weekly forecasts
+2. P10/P50/P90 scenario ranges
+3. Reliability-aware predictions
+4. Marketing-uplift attribution
+5. Lifecycle segmentation (Launch → Mid-Tail → Long-Tail)
+6. Promo-safe smoothing
+7. Explainability via an integrated dashboard
 
-Feature validation and pruning pipeline
+---
 
-Multi-layer forecasting engine
-(Prior Curve → Log-Residual XGB → XSTL → Reliability Blending)
+# 🏃‍♂️ How to Run the Game Sales Forecasting Engine
 
-Power BI analytics dashboard
-
-Full execution instructions for replicability
-
-
-Designed for AAA, AA, Indie, and New IP titles, the engine provides:
-
-
-52-week weekly forecasts
-
-P10/P50/P90 scenario ranges
-
-Reliability-aware predictions
-
-Marketing-uplift attribution
-
-Lifecycle segmentation (Launch → Mid-Tail → Long-Tail)
-
-Promo-safe smoothing
-
-Explainability via an integrated dashboard
-
-
-🏃‍♂️ How to Run the Game Sales Forecasting Engine
-
-Execution Guide
+**Execution Guide**
 
 This document explains how to run each component of the forecasting pipeline:
-
-Synthetic dataset generator
-
-Feature validator
-
-Feature pruner
-
-Weekly forecasting engine
-
-Power BI dashboard refresh
+1. Synthetic dataset generator  
+2. Feature validator
+3. Feature pruner  
+4. Weekly forecasting engine  
+5. Power BI dashboard refresh  
 
 Designed so anyone can execute the full workflow without guessing.
 
+---
 
-1. 📦 Prerequisites
-✔ Install Python 3.9–3.11
 
+# 1. 📦 Prerequisites
+### ✔ Install Python 3.9–3.11
 Any version in this range will work.
 
-✔ Install required Python packages
-
+### ✔ Install required Python packages
 From the repository root:
 
+```bash
 pip install -r requirements.txt
+```
+### ✔ Core dependencies used in the model
+- numpy  
+- pandas  
+- xgboost  
+- scikit-learn  
+- python-dateutil  
+- (optional) scikit-optimize — only needed for Bayesian optimisation  
 
-Core dependencies
-
-numpy
-
-pandas
-
-scikit-learn
-
-xgboost
-
-python-dateutil
-
-(optional) scikit-optimize
+---
 
 
-2. 📁 Repository Structure
+# 2. 📁 Repository Structure
+
+
+```
 game-sales-forecasting-engine/
 │
 ├── src/
@@ -88,23 +70,25 @@ game-sales-forecasting-engine/
 │   ├── 02_feature_validator.py
 │   ├── 03_game_feature_pruner.py
 │   ├── 04_model_runner.py
-│   └── utils/
+│   └── utils/...
 │
 ├── data/
 │   ├── synthetic_examples/
+│   │   ├── synthetic_game_sales_timeseries_sample.csv
+│   │   ├── new_game_NeonRift_AAA.csv
+│   │   ├── new_game_Ashbound_AA.csv
+│   │   └── new_game_Pulsebreak_Indie.csv
 │   └── (full datasets if available)
-│
-├── sales_model_runs/
-│   ├── new_games_sales_forecast_detailed.csv
-│   ├── new_games_sales_summary.csv
-│   └── new_games_sales_metadata.csv
 │
 ├── dashboard/
 │   ├── GameSalesForecast.pbix
 │   └── screenshots/
 │
 └── docs/
-    └── how_to_run.md
+    └── how_to_run.md   ← You are here
+```
+
+---
 
 
 Each script has a single responsibility to ensure clarity, reproducibility, and correct sequencing.
