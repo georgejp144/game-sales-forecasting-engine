@@ -2,23 +2,23 @@
 
 A fully reproducible, end-to-end forecasting pipeline for weekly video-game sales prediction.
 
-This repository contains the complete implementation described in the Game Sales Forecasting Engine – Brief Proposal Document 
+This repository contains the complete implementation, including:
 
-Brief Proposal - Game Sales For…
-
-, including:
 
 Synthetic data generator
 
 Feature validation and pruning pipeline
 
-Multi-layer forecasting engine (Prior Curve → Log-Residual XGB → XSTL → Reliability Blending)
+Multi-layer forecasting engine
+(Prior Curve → Log-Residual XGB → XSTL → Reliability Blending)
 
 Power BI analytics dashboard
 
 Full execution instructions for replicability
 
+
 Designed for AAA, AA, Indie, and New IP titles, the engine provides:
+
 
 52-week weekly forecasts
 
@@ -26,58 +26,61 @@ P10/P50/P90 scenario ranges
 
 Reliability-aware predictions
 
-Marketing uplift attribution
+Marketing-uplift attribution
 
-Lifecycle segmentation
+Lifecycle segmentation (Launch → Mid-Tail → Long-Tail)
 
-Promo impact smoothing
+Promo-safe smoothing
 
-Cold-start capability
+Explainability via an integrated dashboard
 
-📘 1. Overview
 
-Publishers operate in a hit-driven, volatile market where traditional forecasting (analogues, franchise ratios, static curves) fails to capture real-world behaviour.
-As highlighted in the proposal (pp. 1–2) 
+🏃‍♂️ How to Run the Game Sales Forecasting Engine
 
-Brief Proposal - Game Sales For…
+Execution Guide
 
-, sales are shaped by:
+This document explains how to run each component of the forecasting pipeline:
 
-DLC drops
+Synthetic dataset generator
 
-Discount cadence
+Feature validator
 
-Seasonal effects
+Feature pruner
 
-Marketing intensity
+Weekly forecasting engine
 
-Competitive pressure
+Power BI dashboard refresh
 
-Platform momentum
+Designed so anyone can execute the full workflow without guessing.
 
-This repository provides a modern, risk-aware, multi-layer forecasting system inspired by quantitative finance and production-grade ML.
 
-Architecture Layers (p. 3–4) 
+1. 📦 Prerequisites
+✔ Install Python 3.9–3.11
 
-Brief Proposal - Game Sales For…
+Any version in this range will work.
 
-:
+✔ Install required Python packages
 
-Behavioural Prior Curve (real-space, dev-type lifecycle model)
+From the repository root:
 
-Log-Residual XGBoost (stable residual learning)
+pip install -r requirements.txt
 
-XSTL Cross-Sectional Transfer Layer (borrows behaviour from similar titles)
+Core dependencies
 
-Reliability Framework (Regime × Drift × XSTL)
+numpy
 
-Promo-Safe Smoothing
+pandas
 
-Uncertainty Bands & Baseline Decomposition
+scikit-learn
 
-The repository implements the complete system—including all data, model code, reproducibility assets, and Power BI dashboards.
+xgboost
 
-📁 2. Repository Structure
+python-dateutil
+
+(optional) scikit-optimize
+
+
+2. 📁 Repository Structure
 game-sales-forecasting-engine/
 │
 ├── src/
@@ -89,7 +92,7 @@ game-sales-forecasting-engine/
 │
 ├── data/
 │   ├── synthetic_examples/
-│   └── (full datasets when available)
+│   └── (full datasets if available)
 │
 ├── sales_model_runs/
 │   ├── new_games_sales_forecast_detailed.csv
@@ -104,31 +107,42 @@ game-sales-forecasting-engine/
     └── how_to_run.md
 
 
-Each script has a single responsibility to ensure auditability, reproducibility, and clean debugging.
+Each script has a single responsibility to ensure clarity, reproducibility, and correct sequencing.
 
-🧠 3. Model Architecture (From Proposal Summary)
+
+3. 📊 Model Architecture (Summary)
 3.1 Behavioural Prior Curve
 
-A structural lifecycle model with dev-type decay profiles, seasonality, DLC/discount echoes, and late-tail flattening (Indie).
-See Proposal p. 3 
+A real-space structural baseline incorporating:
 
-Brief Proposal - Game Sales For…
+Dev-type decay behaviour
 
-.
+Seasonal launch effects
 
-3.2 Residual XGBoost (Log Space)
+DLC and discount uplift + echo windows
 
-Predicts log-residuals rather than raw sales → reduces variance, stabilises training, avoids overfitting, and ensures commercially realistic behaviour.
+Indie late-tail flattening
 
-3.3 XSTL Cross-Sectional Transfer Learning
+3.2 Log-Residual XGBoost
 
-Compares the new title with 200 synthetic historical titles using distance + weekly similarity.
+The model predicts log residuals, not raw sales:
+
+residual = log(1 + actual) − log(1 + prior)
+
+
+Residuals are added back to produce stable, variance-controlled predictions.
+
+3.3 XSTL (Cross-Sectional Transfer Learning)
+
+Compares the new title with a historical library of synthetic games using:
+
+Mahalanobis distance
+
+Weekly similarity
+
+Dev-type and franchise patterns
+
 Supports cold-start forecasting.
-Described in Proposal p. 3–4 
-
-Brief Proposal - Game Sales For…
-
-.
 
 3.4 Reliability Framework
 
@@ -140,78 +154,121 @@ Drift Score
 
 XSTL Similarity
 
-Combined into a final reliability score that determines how much weight XGB receives versus the structural prior.
-See Example on p. 4 (e.g., Week-0 weight = 0.30) 
+Combined to weight Prior vs XGB (0.30 → 0.90).
 
-Brief Proposal - Game Sales For…
+3.5 Final Outputs
 
-.
+Each weekly forecast includes:
 
-3.5 Outputs (all weekly)
+Final blended prediction
 
-Final blended forecast
+P10 / P50 / P90 uncertainty ranges
 
-Baseline vs marketing uplift
-
-P10 / P50 / P90 ranges
+Forecast Uncertainty Index
 
 Reliability score
 
+Baseline vs marketing uplift
+
 Metadata for Power BI
 
-Promo-safe adjustments
 
-🚀 4. Running the Pipeline (End-to-End)
-4.1 Install requirements
-pip install -r requirements.txt
+4. ▶️ Running the Synthetic Generator
 
+Recreates the entire synthetic dataset from scratch.
 
-Key dependencies:
-
-numpy
-
-pandas
-
-scikit-learn
-
-xgboost
-
-python-dateutil
-
-(optional) scikit-optimize
-
-▶️ Step 1 — Generate Synthetic Dataset
 python src/01_synthetic_game_generator.py
 
 
-Outputs include:
+Outputs:
 
 synthetic_data/
     synthetic_game_sales_timeseries.csv
     new_game_<title>_<dev>.csv
+    
 
-🔍 Step 2 — Run Feature Validator
+5. 🔍 Running the Feature Validator
+
+Ensures data quality before pruning or modelling.
+
 python src/02_feature_validator.py
 
+
+Checks:
+
+Missing or invalid values
+
+Week-index consistency
+
+Price / discount / DLC issues
+
+Marketing index integrity
+
+Synthetic-data stability
 
 Outputs:
 
 synthetic_data/feature_validator/
     validation_report.txt
     validation_flags.csv
+    
 
-✂️ Step 3 — Run Feature Pruner
+6. ✂️ Running the Feature Pruner
+
+Institutional-grade pruning stage:
+
+Missingness filtering
+
+Zero-variance removal
+
+High-correlation cluster pruning
+
+XGBoost gain-ranking
+
+Economic-sign consistency
+
+Feature Quality Score (0–100)
+
+Run:
+
 python src/03_game_feature_pruner.py
 
 
 Outputs:
 
 synthetic_data/feature_pruner/
-    selected_feature_list.txt   ← REQUIRED
+    pruner_missingness_report.csv
+    pruner_corr_matrix.csv
+    feature_scores.csv
+    selected_features.csv
+    selected_feature_list.txt
 
-📈 Step 4 — Run Weekly Forecasting Engine
+
+selected_feature_list.txt is required by the model runner.
+
+
+7. 🚀 Running the Weekly Forecasting Engine
+
+Main model execution:
+
 python src/04_model_runner.py
 
+
+Includes:
+
+Prior curve
+
+Log-residual XGB
+
+XSTL
+
+Reliability blending
+
+Promo-safe smoothing
+
+P10/P90 uncertainty
+
+Marketing uplift decomposition
 
 Outputs:
 
@@ -221,71 +278,30 @@ sales_model_runs/
     new_games_sales_metadata.csv
 
 
-These are the inputs for Power BI.
-
-📊 5. Power BI Dashboard
+8. 📊 Updating the Power BI Dashboard
 
 Open:
 
 dashboard/GameSalesForecast.pbix
 
 
-Update the data source paths to the newest CSVs, then hit Refresh.
+Then update your CSV paths:
 
-Dashboard visuals include (Proposal p. 6) 
+sales_model_runs/new_games_sales_forecast_detailed.csv
+sales_model_runs/new_games_sales_summary.csv
+sales_model_runs/new_games_sales_metadata.csv
 
-Brief Proposal - Game Sales For…
 
-:
+Press Refresh to update:
 
-Executive KPI Header (Dev-type, strength, totals, SMAPE, half-life, plateau, uncertainty)
+Lifecycle segmentation
 
-Baseline vs Blended Curve
+Cumulative forecast
 
-Cumulative Forecast + Lifecycle Segmentation (Launch/Mid-tail/Long-tail)
+Reliability timeline
 
-Uncertainty Bands (P10–P90)
+Promo impact
 
-Promo Impact Timeline (DLC, discount)
+Marketing uplift
 
-Marketing ROI vs Baseline
-
-Model Reliability Over Time
-
-These visuals make the model explainable for commercial, finance, and marketing teams.
-
-📘 6. Example: NeonRift AAA (Proposal Reference)
-
-The README can optionally include a short example (derived from pp. 4–5) 
-
-Brief Proposal - Game Sales For…
-
-:
-
-Peak: 1.45M
-
-k-decay: 0.087
-
-Week-0 blended: 1.48M
-
-Week-0 marketing uplift: ~520k
-
-Year-1 total: ~17.6M units
-
-Reliability scaling XGB weight: 0.30 → ~0.59
-
-If you'd like this inside the README, I can format it into a collapsible <details> block.
-
-🔁 7. Reproducibility
-
-The entire system is:
-
-Deterministic
-
-Seed-ledger controlled
-
-Versioned (v25_1 → v31)
-
-Modular (each stage independently executable)
-
-Every forecast is reproducible on any machine running Python 3.9–3.11.
+Uncertainty bands
